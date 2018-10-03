@@ -1,12 +1,7 @@
 package com.jBrinkerExercise.JBexercise;
 
-
-import javax.persistence.Entity;
-
 import org.json.JSONObject;
 
-
-@Entity
 public class Invoice extends JSONObject {
 	
 	private String ref;
@@ -56,11 +51,5 @@ public class Invoice extends JSONObject {
 	public void setAmount(double amount) {
 		this.amount = amount;
 	}
-
-	@Override
-	public String toString() {
-		return "Invoice [ref=" + ref + ", date=" + date + ", currency=" + currency + ", amount=" + amount + "]";
-	}
-	
 
 }

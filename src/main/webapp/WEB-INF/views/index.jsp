@@ -11,11 +11,12 @@
 <link rel="stylesheet"
 	href="https://stackpath.bootstrapcdn.com/bootswatch/4.1.3/minty/bootstrap.min.css" />
 </head>
-<body>
+<body style="margin-left: 50px; margin-top: 50px;">
 
-<h1> Enter the name of an HTML file (omitting extension) located at this project's root directory: </h1>
+<h1> Enter the name of an HTML file (omitting extension) located at this project's root directory. </h1>
+<h2> Your JSON file will be written to the same directory. </h2>
 
-<div style="margin-left: 50px; margin-top: 50px;">
+<div>
 	<form action="/parse">
 		<input type=text name="htmlfile" placeholder="file name">
 		<input type="submit" value="submit">

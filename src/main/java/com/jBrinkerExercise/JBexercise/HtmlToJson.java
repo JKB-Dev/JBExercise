@@ -25,12 +25,13 @@ import org.springframework.web.servlet.ModelAndView;
 @Controller
 public class HtmlToJson {
 	
+	String htmlFileName;
 	String ref;
 	String date;
 	String currency;
 	double amount;
 	
-	// TODO: export .json file, method commented out below
+	// TODO: in file output, fix order of JSON properties and format
 	
 	// request user input
 	@RequestMapping("/")
@@ -44,6 +45,7 @@ public class HtmlToJson {
 	@RequestMapping("/parse")
 	public ModelAndView htmlParse(@RequestParam("htmlfile") String htmlFile) {
 		
+		htmlFileName = htmlFile;
 		JSONObject invoice = new JSONObject();
 		
 		try {
@@ -118,20 +120,19 @@ public class HtmlToJson {
 		
 		// FIXME: 
 		
-//		try (FileWriter file = new FileWriter("test.json")) {
-//
-//            file.write(invoice.toJSONString());
-//            file.flush();
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+		try (FileWriter file = new FileWriter(htmlFileName + ".json")) {
+
+            file.write(invoice.toString());
+            file.flush();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 	
 		System.out.println(invoiceObj);	// for testing
 		
-		return new ModelAndView("result", "tag", invoiceObj);
+		return new ModelAndView("result", "tag", htmlFileName + ".json has been written to the project's root directory.");
 	}
 	
 }
-
 
