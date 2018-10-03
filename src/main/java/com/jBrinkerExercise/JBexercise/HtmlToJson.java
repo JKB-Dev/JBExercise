@@ -12,8 +12,6 @@ import java.util.Locale;
 //import org.json.simple.JSONArray;
 //import org.json.simple.JSONObject;
 
-
-
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -27,8 +25,12 @@ import org.springframework.web.servlet.ModelAndView;
 @Controller
 public class HtmlToJson {
 	
-	// TODO: order json properties: ref, date, currency, amount
-	// also, export .json file
+	String ref;
+	String date;
+	String currency;
+	double amount;
+	
+	// TODO: export .json file, method commented out below
 	
 	// request user input
 	@RequestMapping("/")
@@ -49,14 +51,14 @@ public class HtmlToJson {
 			File input = new File(htmlFile + ".html");
 			Document doc = Jsoup.parse(input, "UTF-8");
 		    
-			Elements ref = doc.getElementsContainingOwnText("Invoice #");
-			String refText = ref.text();
+			Elements refEl = doc.getElementsContainingOwnText("Invoice #");
+			String refText = refEl.text();
 			String[] rtSplit = refText.split(" ");
-		    String invNum = rtSplit[6];
-			invoice.put("ref", invNum);
+		    ref = rtSplit[6];
+			invoice.put("ref", ref);
 		    
-		    Elements date = doc.getElementsContainingOwnText("Date");
-		    String dateText = date.text();
+		    Elements dateEl = doc.getElementsContainingOwnText("Date");
+		    String dateText = dateEl.text();
 		    dateText = dateText.substring(6);
 		   
 		    if (dateText.contains("/")) {
@@ -65,8 +67,8 @@ public class HtmlToJson {
 				    DateFormat dfSlash = new SimpleDateFormat("mm/dd/yyy", Locale.ENGLISH);
 				    DateFormat output = new SimpleDateFormat("yyyy-mm-dd");
 				    Date result = dfSlash.parse(dateText);
-				    String shortResult = output.format(result);
-				    invoice.put("date", shortResult);
+				    date = output.format(result);
+				    invoice.put("date", date);
 			    }
 			    catch (ParseException e)
 			    {
@@ -79,8 +81,8 @@ public class HtmlToJson {
 				    DateFormat df = new SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH);
 				    Date result =  df.parse(dateText);  
 				    DateFormat output = new SimpleDateFormat("yyyy-MM-dd");
-				    String shortResult = output.format(result);
-				    invoice.put("date", shortResult);
+				    date = output.format(result);
+				    invoice.put("date", date);
 			    }
 			    catch (ParseException f)
 			    {
@@ -95,8 +97,7 @@ public class HtmlToJson {
 		    String fullAmount = splitMoney[1];
 		    String[] lastAmount = fullAmount.split(" ");
 		    
-		    String currency = "";
-		    double amount = Double.parseDouble(lastAmount[0]);
+		    amount = Double.parseDouble(lastAmount[0]);
 		    
 		    if (lastAmount.length > 1) {
 		    	currency = lastAmount[1];
@@ -113,7 +114,9 @@ public class HtmlToJson {
 		    	f.printStackTrace();
 		    }  
 		
-		// not working -- need to create POJO?
+		Invoice invoiceObj = new Invoice(ref, date, currency, amount);
+		
+		// FIXME: 
 		
 //		try (FileWriter file = new FileWriter("test.json")) {
 //
@@ -124,9 +127,9 @@ public class HtmlToJson {
 //            e.printStackTrace();
 //        }
 	
-		System.out.println(invoice);	// for testing
+		System.out.println(invoiceObj);	// for testing
 		
-		return new ModelAndView("result", "tag", invoice);
+		return new ModelAndView("result", "tag", invoiceObj);
 	}
 	
 }
