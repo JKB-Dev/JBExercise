@@ -2,11 +2,17 @@ package com.jBrinkerExercise.JBexercise;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.FileWriter;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+//import org.json.simple.JSONArray;
+//import org.json.simple.JSONObject;
+
+
 
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -21,22 +27,21 @@ import org.springframework.web.servlet.ModelAndView;
 @Controller
 public class HtmlToJson {
 	
+	// TODO: order json properties: ref, date, currency, amount
+	// also, export .json file
+	
 	// request user input
 	@RequestMapping("/")
 	public ModelAndView index () {
 		ModelAndView mv = new ModelAndView("index");
 		mv.addObject("tag", "made it here");
 		return mv;
-		//htmlParse(fileName);
 	}
 	
 	// parse input and display JSON object
 	@RequestMapping("/parse")
 	public ModelAndView htmlParse(@RequestParam("htmlfile") String htmlFile) {
 		
-		//Scanner scan = new Scanner(System.in);
-		//System.out.println("Please enter the name (excluding extension) of an invoice html file located in this project's root directory (e.g.: invoice1):");
-		//String htmlFile = scan.nextLine();
 		JSONObject invoice = new JSONObject();
 		
 		try {
@@ -56,9 +61,9 @@ public class HtmlToJson {
 		   
 		    if (dateText.contains("/")) {
 		    	
-		    	try {
-				    DateFormat dfSlash = new SimpleDateFormat("dd/mm/yyy", Locale.ENGLISH);
-				    DateFormat output = new SimpleDateFormat("yyyy-MM-dd");
+		    	try {	
+				    DateFormat dfSlash = new SimpleDateFormat("mm/dd/yyy", Locale.ENGLISH);
+				    DateFormat output = new SimpleDateFormat("yyyy-mm-dd");
 				    Date result = dfSlash.parse(dateText);
 				    String shortResult = output.format(result);
 				    invoice.put("date", shortResult);
@@ -86,27 +91,40 @@ public class HtmlToJson {
 		    Elements gTotal = doc.getElementsContainingOwnText("Grand Total");
 		    Element money = gTotal.get(0);
 		    String moneyText = money.text();
-		    String[] splitMoney = moneyText.split(" ");
+		    String[] splitMoney = moneyText.split("\\$");
+		    String fullAmount = splitMoney[1];
+		    String[] lastAmount = fullAmount.split(" ");
 		    
-		    if (splitMoney.length > 3) {
-		    	String currency = splitMoney[3];
-		    	invoice.put("currency", currency);
-		    	String amount = splitMoney[2];
-		    	invoice.put("amount", amount);
+		    String currency = "";
+		    double amount = Double.parseDouble(lastAmount[0]);
+		    
+		    if (lastAmount.length > 1) {
+		    	currency = lastAmount[1];
 		    } else {
-		    	String amount = splitMoney[2];
-		    	invoice.put("amount", amount);
+		    	currency = "USD";
 		    }
+		    
+		    invoice.put("currency", currency);
+		    invoice.put("amount", amount);
 		    
 		    }
 		    catch (IOException f)
 		    {
 		    	f.printStackTrace();
 		    }  
+		
+		// not working -- need to create POJO?
+		
+//		try (FileWriter file = new FileWriter("test.json")) {
+//
+//            file.write(invoice.toJSONString());
+//            file.flush();
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 	
-		//System.out.println(invoice);
-		//scan.close();
-		//result(invoice);
+		System.out.println(invoice);	// for testing
 		
 		return new ModelAndView("result", "tag", invoice);
 	}

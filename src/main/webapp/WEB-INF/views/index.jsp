@@ -22,7 +22,5 @@
 	</form>
 </div> 
 
-${tag}
-
 </body>
 </html>
