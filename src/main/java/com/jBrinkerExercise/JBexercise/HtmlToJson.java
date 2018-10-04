@@ -41,7 +41,7 @@ public class HtmlToJson {
 	
 	// parse input and display JSON object
 	@RequestMapping("/parse")
-	public ModelAndView htmlParse(@RequestParam("htmlfile") String htmlFile) {
+	public ModelAndView htmlParse(@RequestParam("htmlfile") String htmlFile, @RequestParam("pretty") Boolean pretty) {
 		
 		htmlFileName = htmlFile;
 		JSONObject invoice = new JSONObject();
@@ -114,24 +114,24 @@ public class HtmlToJson {
 		    	f.printStackTrace();
 		    }  
 		
+		// create invoice object
 		Invoice invoiceObj = new Invoice(ref, date, currency, amount);
 		
 		ObjectMapper mapper = new ObjectMapper();
 
 		try {
 			// Convert object to JSON string and save into a file directly
-			//mapper.writeValue(new File(htmlFileName + ".json"), invoiceObj);
-			//mapper.writerWithDefaultPrettyPrinter().writeValueAsString(new File(htmlFileName + ".json"));
-			mapper.writerWithDefaultPrettyPrinter().writeValue(new File(htmlFileName + ".json"), invoiceObj);
 			
-			// Convert object to JSON string
-			//String jsonInString = mapper.writeValueAsString(invoiceObj);
-			//System.out.println(jsonInString);
-
-			// Convert object to JSON string and pretty print
-			//jsonInString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(invoiceObj);
-			//System.out.println(jsonInString);
-
+			if (pretty == true) {
+				
+			// ordered, pretty printed:
+			mapper.writerWithDefaultPrettyPrinter().writeValue(new File(htmlFileName + ".json"), invoiceObj);
+			} else {
+				
+			// unordered, not pretty printed:
+			mapper.writeValue(new File(htmlFileName + ".json"), invoiceObj);
+			}	
+			
 		} catch (JsonGenerationException e) {
 			e.printStackTrace();
 		} catch (JsonMappingException e) {

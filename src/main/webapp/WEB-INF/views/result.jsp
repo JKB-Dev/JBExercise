@@ -14,7 +14,7 @@
 </head>
 <body style="margin-left: 50px; margin-top: 50px;">
 
-${tag}
+<h1>${tag}</h1>
 
 </body>
 </html>
