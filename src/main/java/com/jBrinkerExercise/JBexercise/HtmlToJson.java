@@ -2,15 +2,11 @@ package com.jBrinkerExercise.JBexercise;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.FileWriter;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-
-//import org.json.simple.JSONArray;
-//import org.json.simple.JSONObject;
 
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -22,6 +18,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Controller
 public class HtmlToJson {
 	
@@ -30,8 +30,6 @@ public class HtmlToJson {
 	String date;
 	String currency;
 	double amount;
-	
-	// TODO: in file output, fix order of JSON properties and format
 	
 	// request user input
 	@RequestMapping("/")
@@ -118,18 +116,29 @@ public class HtmlToJson {
 		
 		Invoice invoiceObj = new Invoice(ref, date, currency, amount);
 		
-		// FIXME: 
-		
-		try (FileWriter file = new FileWriter(htmlFileName + ".json")) {
+		ObjectMapper mapper = new ObjectMapper();
 
-            file.write(invoice.toString());
-            file.flush();
+		try {
+			// Convert object to JSON string and save into a file directly
+			//mapper.writeValue(new File(htmlFileName + ".json"), invoiceObj);
+			//mapper.writerWithDefaultPrettyPrinter().writeValueAsString(new File(htmlFileName + ".json"));
+			mapper.writerWithDefaultPrettyPrinter().writeValue(new File(htmlFileName + ".json"), invoiceObj);
+			
+			// Convert object to JSON string
+			//String jsonInString = mapper.writeValueAsString(invoiceObj);
+			//System.out.println(jsonInString);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-	
-		System.out.println(invoiceObj);	// for testing
+			// Convert object to JSON string and pretty print
+			//jsonInString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(invoiceObj);
+			//System.out.println(jsonInString);
+
+		} catch (JsonGenerationException e) {
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		
 		return new ModelAndView("result", "tag", htmlFileName + ".json has been written to the project's root directory.");
 	}
