@@ -2,6 +2,7 @@ package com.jBrinkerExercise.JBexercise;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -24,114 +25,116 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Controller
 public class HtmlToJson {
-	
+
 	String htmlFileName;
 	String ref;
 	String date;
 	String currency;
-	double amount;
-	
+	BigDecimal amount;
+
 	// request user input
 	@RequestMapping("/")
-	public ModelAndView index () {
+	public ModelAndView index() {
 		ModelAndView mv = new ModelAndView("index");
-		mv.addObject("tag", "made it here");
+		mv.addObject("tag", "parse HTML to JSON file");
 		return mv;
 	}
-	
+
 	// parse input and display JSON object
 	@RequestMapping("/parse")
 	public ModelAndView htmlParse(@RequestParam("htmlfile") String htmlFile, @RequestParam("pretty") Boolean pretty) {
-		
+
 		htmlFileName = htmlFile;
 		JSONObject invoice = new JSONObject();
-		
+
 		try {
-			
+
 			File input = new File(htmlFile + ".html");
+			
+			// if no file matches user input, reload index
+			if (!input.exists()) {
+				return new ModelAndView("index", "tag", "Sorry, that file doesn't exist.");
+			}
+			
 			Document doc = Jsoup.parse(input, "UTF-8");
-		    
+
 			Elements refEl = doc.getElementsContainingOwnText("Invoice #");
 			String refText = refEl.text();
 			String[] rtSplit = refText.split(" ");
-		    ref = rtSplit[6];
+			ref = rtSplit[6];
 			invoice.put("ref", ref);
-		    
-		    Elements dateEl = doc.getElementsContainingOwnText("Date");
-		    String dateText = dateEl.text();
-		    dateText = dateText.substring(6);
-		   
-		    if (dateText.contains("/")) {
-		    	
-		    	try {	
-				    DateFormat dfSlash = new SimpleDateFormat("mm/dd/yyy", Locale.ENGLISH);
-				    DateFormat output = new SimpleDateFormat("yyyy-mm-dd");
-				    Date result = dfSlash.parse(dateText);
-				    date = output.format(result);
-				    invoice.put("date", date);
-			    }
-			    catch (ParseException e)
-			    {
-			    	e.printStackTrace();
-			    }  
-		   
-		    } else {
-		    	try {
-		    		
-				    DateFormat df = new SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH);
-				    Date result =  df.parse(dateText);  
-				    DateFormat output = new SimpleDateFormat("yyyy-MM-dd");
-				    date = output.format(result);
-				    invoice.put("date", date);
-			    }
-			    catch (ParseException f)
-			    {
-			    	f.printStackTrace();
-			    }  
-		    }
-		    
-		    Elements gTotal = doc.getElementsContainingOwnText("Grand Total");
-		    Element money = gTotal.get(0);
-		    String moneyText = money.text();
-		    String[] splitMoney = moneyText.split("\\$");
-		    String fullAmount = splitMoney[1];
-		    String[] lastAmount = fullAmount.split(" ");
-		    
-		    amount = Double.parseDouble(lastAmount[0]);
-		    
-		    if (lastAmount.length > 1) {
-		    	currency = lastAmount[1];
-		    } else {
-		    	currency = "USD";
-		    }
-		    
-		    invoice.put("currency", currency);
-		    invoice.put("amount", amount);
-		    
-		    }
-		    catch (IOException f)
-		    {
-		    	f.printStackTrace();
-		    }  
-		
+
+			Elements dateEl = doc.getElementsContainingOwnText("Date");
+			String dateText = dateEl.text();
+			dateText = dateText.substring(6);
+
+			if (dateText.contains("/")) {
+
+				try {
+					DateFormat dfSlash = new SimpleDateFormat("mm/dd/yyy", Locale.ENGLISH);
+					DateFormat output = new SimpleDateFormat("yyyy-mm-dd");
+					Date result = dfSlash.parse(dateText);
+					date = output.format(result);
+					invoice.put("date", date);
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+
+			} else {
+				try {
+
+					DateFormat df = new SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH);
+					Date result = df.parse(dateText);
+					DateFormat output = new SimpleDateFormat("yyyy-MM-dd");
+					date = output.format(result);
+					invoice.put("date", date);
+				} catch (ParseException f) {
+					f.printStackTrace();
+				}
+			}
+
+			Elements gTotal = doc.getElementsContainingOwnText("Grand Total");
+			Element money = gTotal.get(0);
+			String moneyText = money.text();
+			String[] splitMoney = moneyText.split("\\$");
+			String fullAmount = splitMoney[1];
+			String[] lastAmount = fullAmount.split(" ");
+
+			double dAmount = Double.parseDouble(lastAmount[0]);
+			amount = BigDecimal.valueOf(dAmount);
+
+			if (lastAmount.length > 1) {
+				currency = lastAmount[1];
+			} else {
+				currency = "USD";
+			}
+
+			invoice.put("currency", currency);
+			invoice.put("amount", amount);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		// create invoice object
 		Invoice invoiceObj = new Invoice(ref, date, currency, amount);
-		
+
 		ObjectMapper mapper = new ObjectMapper();
 
 		try {
 			// Convert object to JSON string and save into a file directly
-			
+
 			if (pretty == true) {
-				
-			// ordered, pretty printed:
-			mapper.writerWithDefaultPrettyPrinter().writeValue(new File(htmlFileName + ".json"), invoiceObj);
+
+				// pretty printed:
+				mapper.writerWithDefaultPrettyPrinter().writeValue(new File(htmlFileName + ".json"), invoiceObj);
 			} else {
+
+				// not pretty printed:
+				mapper.writeValue(new File(htmlFileName + ".json"), invoiceObj);
 				
-			// unordered, not pretty printed:
-			mapper.writeValue(new File(htmlFileName + ".json"), invoiceObj);
-			}	
-			
+			}
+
 		} catch (JsonGenerationException e) {
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
@@ -139,9 +142,10 @@ public class HtmlToJson {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		return new ModelAndView("result", "tag", htmlFileName + ".json has been written to the project's root directory.");
-	}
-	
-}
 
+		// successful result, notify user
+		return new ModelAndView("result", "tag",
+				htmlFileName + ".json has been written to the project's root directory.");
+	}
+
+}
